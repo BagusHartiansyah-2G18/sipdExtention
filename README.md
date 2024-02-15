@@ -5,6 +5,3 @@ Optimasi aplikasi https://sipd-ri.kemendagri.go.id
 - Export data Standar Harga
 - Export Urusan Bidang Program Kegiatan dan Sub Kegiatan
 - export data Sub Kegiatan SKPD dan Rincian Belanja
-
-### Video tutorial
-- ...

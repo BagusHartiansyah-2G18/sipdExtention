@@ -147,30 +147,99 @@ function subKegiatanSKPD(idSKPD = getUrlVars("id_skpd")) {
 }
 function subKegiatanSKPDRincian(idSKPD) {
     mfc.perencanaan.sub.forEach(async (v,i) => {
-        await relayAjax({
-            url: config.sipd_url+'api/renja/rinci_sub_bl/get_by_id_sub_bl',                                    
-            type: 'POST',	      				
-            data: {            
-                tahun: _token.ta,
-                id_daerah: _token.daerah_id,  
-                id_unit: idSKPD,
-                id_sub_bl: v.id_sub_bl,
-                is_prop: 0,
-                is_anggaran: 0
-            },
-            beforeSend: function (xhr) {			    
-                xhr.setRequestHeader("X-API-KEY", getHeader1());
-                xhr.setRequestHeader("X-ACCESS-TOKEN", _token.token);  
-            },success: function(resp){
-                mfc.perencanaan.sub[i].rincian = resp.data;
-
-                if (i==(mfc.perencanaan.sub.length-1)) {
-                    saveJSON(mfc,"data-subRincian-"+mfc.perencanaan.sub.length)
+        setTimeout(
+            await relayAjax({
+                url: config.sipd_url+'api/renja/rinci_sub_bl/get_by_id_sub_bl',                                    
+                type: 'POST',	      				
+                data: {            
+                    tahun: _token.ta,
+                    id_daerah: _token.daerah_id,  
+                    id_unit: idSKPD,
+                    id_sub_bl: v.id_sub_bl,
+                    is_prop: 0,
+                    is_anggaran: 0
+                },
+                beforeSend: function (xhr) {			    
+                    xhr.setRequestHeader("X-API-KEY", getHeader1());
+                    xhr.setRequestHeader("X-ACCESS-TOKEN", _token.token);  
+                },success:function( resp){
+                    mfc.perencanaan.sub[i].rincian = resp.data;
+                    
+                    if (i==(mfc.perencanaan.sub.length-1)) {
+                        // saveJSON(mfc,"data-subRincian-"+mfc.perencanaan.sub.length)
+                        return getJudulRincian();
+                    }
                 }
-            }
-        });
+            })
+        , 1000);
+        
     });
 }
+// nip="197505072002121003",
+// passs="sumbawabaratkab01#@!A",
+async function getJudulRincian() {
+    let didJudul = [];
+    mfc.perencanaan.sub.forEach((v,i) => {
+        try {
+            v.rincian.forEach((v1,i1) => {
+                didJudul.push(v1.id_subs_sub_bl);
+            });
+        } catch (error) {
+            
+        }
+    })
+    
+    didJudul = [...new Set(didJudul)];
+    let loop = didJudul.length/20,
+        sisa = didJudul%20,
+        dexec=[];
+    if(sisa!=0){
+        loop++;
+    }
+    // for (let index = 1; index < 2; index++) {
+        // dexec = didJudul.slice(((index-1)*20),(index*20));
+    await relayAjax({
+        url: config.sipd_url+'api/renja/subs_sub_bl/find_by_id_list',                                    
+        type: 'POST',	      				
+        data: {            
+            tahun: _token.ta,
+            id_daerah: _token.daerah_id,  
+            __id_subs_sub_bl_list: JSON.stringify(didJudul), 
+            is_anggaran: 0
+        },
+        beforeSend: function (xhr) {			    
+            xhr.setRequestHeader("X-API-KEY", getHeader1());
+            xhr.setRequestHeader("X-ACCESS-TOKEN", _token.token);  
+        },success: function(resp){
+            mfc.perencanaan.judul=resp.data;
+            return getSumberDana();
+        }
+    });
+        
+    // }
+    
+    // return console.log(JSON.stringify([...new Set(didJudul)]));
+    
+}
+async function getSumberDana() {
+    await relayAjax({
+        url: config.sipd_url+'api/renja/dana_sub_bl/get_by_id_sub_bl',                                    
+        type: 'POST',	      				
+        data: {            
+            tahun: _token.ta,
+            id_daerah: _token.daerah_id,  
+            id_sub_bl: mfc.perencanaan.sub[0].id_sub_bl
+        },
+        beforeSend: function (xhr) {			    
+            xhr.setRequestHeader("X-API-KEY", getHeader1());
+            xhr.setRequestHeader("X-ACCESS-TOKEN", _token.token);  
+        },success: function(resp){
+            mfc.perencanaan.dana=resp.data[0];
+            saveJSON(mfc,"data-subRincian-"+mfc.perencanaan.sub.length)
+        }
+    });
+}
+
 
 // batas
 standarHarga = [{
